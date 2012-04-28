@@ -1,0 +1,40 @@
+#######################################
+# Syntax Coloring Map For EventFuse
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+EventFuse	KEYWORD1
+FuseID  KEYWORD1
+eventFuseCallback_t KEYWORD1
+FuseState KEYWORD1
+eventFuse_t KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+newFuse	KEYWORD2
+resetFuse	KEYWORD2
+burn	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+eventFuse	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+fsUnallocated	LITERAL1
+fsEnabled	LITERAL1
+fsDisabled	LITERAL1
+fsBlocked	LITERAL1
+MAX_FUSES	LITERAL1
+NULL_FUSE	LITERAL1
+INF_REPEAT	LITERAL1

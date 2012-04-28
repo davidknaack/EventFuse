@@ -1,0 +1,242 @@
+EventFuse Library for Arduino
+------------------------------
+Author:  David Knaack
+Contact: davidknaack@gmail.com
+------------------------------
+
+
+History
+-------
+ 0.1 2009-06-16: Initial Release
+ 0.2 2009-07-20: Interface update
+
+
+Description
+-----------
+
+EventFuse is a library for the Arduino.
+It is useful for triggering actions after a specific number of events have occured. The user may set a 'fuse' of a specific length and a callback function that will be executed when the fuse runs out. Fuses may be set to repeat a specific number of times or to be unlimited. Fuses may be paused, resumed and deleted.
+Each time the user calls the 'burn' function of the Fuses object all active fuses will be shortened by the specified quantity (usually 1). The callback function will then be called for any fuse that reaches 0 or less.
+In the callback function the user may manipulate the fuse settings by setting a new fuse length or repeat count or disabling the fuse.
+The burn function may be called from a timer routine to provide a time-based countdown feature, or it can be called in response to other programmed events.
+Download, install and import
+
+Place the EventFuse folder in the Arduino "libraries\" folder
+In the Arduino IDE, create a new sketch (or open one) and select from the menubar "Sketch->Import Library->EventFuse".
+Setup
+
+The library declares a default instance of the EventFuse class called eventFuse. Additional instances may be created if desired.
+
+
+Methods
+-------
+
+FuseID newFuse(int userData, int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback)
+FuseID newFuse(int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
+
+Set a fuse of length fuseLen units that will repeat repeatCount times before it is disabled and that will call fuseCallback each time the length reaches zero or less.
+
+
+void resetFuse(FuseID fuse, int userData, int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
+void resetFuse(FuseID fuse, int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
+
+Update the settings on an existing fuse. May also be used to create a fuse with the specified ID, but can potentially overwrite an existing fuse.
+
+
+void burn(int len);
+
+Reduce the length of all fuses by len. The value may be negative to increase the length of the fuse, but be aware that no range checking is performed, it is possible for fuseLen to wrap. After the lengths have been adjusted the callback for each fuse with a length of zero or less will executed, the repeatCount reduced and the fuse length reset. When the repeatCount reaches zero the fuse state will be set to fsUnallocated. The repeat count for fuses with a repeat count of INF_REPEAT will not be adjusted.
+Take care to avoid coding a callback routine such that another call to burn() can be made. This can occur if burn() is called by an interrupt-driven event.
+For example, in the second example below if the toggleOutput() function were to call delay(2) the MsTimer2 interrupt callback would trigger tick() which then calls burn(). In the burn() function the toggleOutput() callback is called again and the process repeats.
+
+
+Examples
+--------
+
+LEDFade
+-------
+
+/*
+ *
+ * Description:
+ * Fade an LED by combining the output of two
+ * fuses with similar intervals. The combined
+ * output exhibits a beat pattern that varies
+ * the output pulse width.
+ *
+ */
+#include <EventFuse.h>
+ 
+int ledPin = 13;       // LED output pin
+boolean output = LOW;  // Output state
+ 
+void FuseEvent(FuseID fuse, int userData){
+  output = !output;
+  digitalWrite( ledPin, output );
+}
+ 
+void setup() {
+  pinMode(ledPin, OUTPUT);
+ 
+  // Set up the two fade fuses
+  eventFuse.newFuse( 150, INF_REPEAT, FuseEvent );
+  eventFuse.newFuse( 152, INF_REPEAT, FuseEvent );
+}
+ 
+void loop(){
+  delayMicroseconds(100);
+  eventFuse.burn(1);
+}
+
+
+
+
+
+
+LEDFadeInt
+----------
+
+/*
+ *
+ * Description:
+ * Fade an LED by combining the output of two
+ * fuses with similar intervals. The combined
+ * output exhibits a beat pattern that varies
+ * the output pulse width.
+ *
+ * Use the interrupt based MsTimer2 library as
+ * a source for a 1mS event for the burn function.
+ *
+ */
+ 
+#include <EventFuse.h>
+#include <MsTimer2.h>
+ 
+int ledPin = 13;       // LED output pin
+boolean output = LOW;  // Output state
+ 
+void ToggleOutput(FuseID fuse, int userData){
+  output = !output;
+  digitalWrite( ledPin, output );
+}
+ 
+void tick(){
+  eventFuse.burn(1);
+}
+ 
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  eventFuse.newFuse( 20, INF_REPEAT, ToggleOutput );
+  eventFuse.newFuse( 21, INF_REPEAT, ToggleOutput );
+ 
+  MsTimer2::set( 1, tick );
+  MsTimer2::start();
+}
+ 
+void loop(){
+}
+
+
+
+
+
+SerialInterval
+--------------
+
+// This example sends a Serial message every 250 milliseconds
+ 
+#include <EventFuse.h> // Include the EventFuse library
+ 
+void sendMessage(FuseID fuse, int userData){
+  // Output all the analog readings separated by a space character
+  for (int i = 0; i < 6; i++ ) {
+    Serial.print (analogRead(i));
+    Serial.print(' ',BYTE);
+  }
+ 
+  // Terminate message with a linefeed and a carriage return
+  Serial.print('\r\n', BYTE);
+}
+ 
+void setup() {
+  Serial.begin(115200); // Start the Serial communication
+  eventFuse.newFuse( 250, INF_REPEAT, sendMessage );
+}
+ 
+void loop() {
+  delay(1);
+  eventFuse.burn(1);
+}
+
+
+
+
+LampTimer
+---------
+
+/*
+ *
+ * Description:
+ * EventFuse example demonstrating control of
+ * multiple independent switched outputs. Each
+ * output can be configured with independent
+ * on and off durations with a minimum of 1 second
+ * and a maximum of about 18 hours (2^16 seconds).
+ *
+ */
+ 
+#include <EventFuse.h>
+#include <MsTimer2.h>
+ 
+#define OutputCount 4
+// These would be better handled as enums,
+// but that requires a seperate .h file.
+#define OffTime 0
+#define OnTime 1
+#define OutputPin 2
+ 
+// The outputs array defines how long each output will
+// be turned off, on, and what pin to use for that output.
+// The off and on values are in units of 'ticks'. The length
+// of a tick is controlled by the setup of MsTimer2.
+                             // off   on  pin
+byte outputs[OutputCount][3] ={{  5,  10,  13},   // Output A
+                               { 15,  20,  12},   // Output B
+                               {  2,  12,  11},   // Output C
+                               { 10,   2,  10},}; // Output D
+ 
+void OutputHandler(FuseID fuseID, int outputID){
+  // look up the pin associated with this output
+  byte pin = outputs[outputID][OutputPin];
+ 
+  // get and invert the current pin state and write
+  // it back to the port to invert the current pin state.
+  int state = 1&~digitalRead(pin);
+  digitalWrite( pin, state );
+ 
+  // Reset the fuse length with a new interval. The current state
+  // of the pin is used to determine which interval should be used.
+  eventFuse[fuseID].fuseLen = outputs[outputID][state];
+}
+ 
+void timerTick(){
+  eventFuse.burn(1);
+}
+ 
+void setup() {
+  // Set up and init all outputs to off
+  for(byte i = 0; i<OutputCount; i++){
+    pinMode( outputs[i][OutputPin], OUTPUT);
+    digitalWrite( outputs[i][OutputPin], LOW );
+ 
+    // Set up an event fuse for this output.
+    eventFuse.newFuse( i, outputs[i][OffTime], INF_REPEAT, OutputHandler );
+  }
+ 
+  // Set MsTimer2 for one second per tick.
+  MsTimer2::set(1000, timerTick );
+  MsTimer2::start();
+}
+ 
+void loop(){
+}
