@@ -2,7 +2,10 @@
  * EventFuse.cpp - A simple fuse-based event callback library
  * v0.1 - 2009-June-16
  * v0.2 - 2009-June-16 Added fsBlocked state to handle callback reentrance.
- * Derived from:
+ * v0.3 - 2012-April-27
+ *   - Minor update to burn() to out or range issue in repeatCount.
+ *     This caused problems with INF_REPEAT fuses.
+* Derived from:
  * Timer.cpp - A Real-time Timer Library for Arduino & Wiring
  * Copyright (c) 2009 Daniel Bradberry.  All right reserved.
  *

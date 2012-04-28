@@ -1,5 +1,8 @@
 /*
  * EventFuse.h - A simple fuse-based event callback library
+ * v0.3 - 2012-April-27
+ *   - Minor update to burn() to out or range issue in repeatCount.
+ *     This caused problems with INF_REPEAT fuses.
  * v0.2 - 2009-July-20
  *   - Reworked interface and renamed some
  *     types to improve usability.
