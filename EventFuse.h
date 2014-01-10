@@ -1,7 +1,12 @@
 /*
  * EventFuse.h - A simple fuse-based event callback library
+ * v0.4 - 2013-Dec-20
+ *   - Converted to namespace.
+ *   - added burn() to burn by one.
+ *   - changed callback user data to int&
+ *   - added cancel(FuseID) 
  * v0.3 - 2012-April-27
- *   - Minor update to burn() to out or range issue in repeatCount.
+ *   - Minor update to burn(int) to out or range issue in repeatCount.
  *     This caused problems with INF_REPEAT fuses.
  * v0.2 - 2009-July-20
  *   - Reworked interface and renamed some
@@ -26,18 +31,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef EventFuse_h
-#define EventFuse_h
+#ifndef EventFuseNs_h
+#define EventFuseNs_h
 
-#define MAX_FUSES 10
-#define NULL_FUSE -1
 #define INF_REPEAT -1
-
 typedef unsigned char FuseID;  // a fuse handle
 
-class EventFuse {
-public:
-	typedef void (*eventFuseCallback_t)(FuseID, int);
+namespace EventFuse {
+
+	#define MAX_FUSES 10
+	#define NULL_FUSE -1
+	
+	typedef void (*eventFuseCallback_t)(FuseID, int&);
 
 	enum FuseState {
 		fsUnallocated,   // fuse not in use
@@ -53,12 +58,12 @@ public:
 		unsigned int repeatCount;		// number of repeats, INF_REPEAT for infinite
 		int userData;					// available for user-defined data
 		eventFuseCallback_t callback;	// callback to execute when fuse runs out
+	
+		void cancel(){ fuseState = fsUnallocated; }
 	};
 
-	EventFuse();
+	void init();
 
-	eventFuse_t& operator[] (FuseID f) { return fuses[f]; }
-	
 	FuseID newFuse(int userData, int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
 	FuseID newFuse(int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
 	
@@ -66,11 +71,9 @@ public:
 	void resetFuse(FuseID fuse, int fuseLen, unsigned int repeatCount, eventFuseCallback_t fuseCallback);
 
 	void burn(int len);
+	void burn();
 	
-  private:
-	eventFuse_t fuses[MAX_FUSES];
+	extern eventFuse_t fuses[MAX_FUSES];
 };
-
-extern EventFuse eventFuse;
 
 #endif

@@ -25,7 +25,6 @@ burn	KEYWORD2
 # Instances (KEYWORD2)
 #######################################
 
-eventFuse	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

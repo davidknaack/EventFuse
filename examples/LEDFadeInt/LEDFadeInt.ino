@@ -6,26 +6,30 @@
  * output exhibits a beat pattern that varies
  * the output pulse width.
  *
+ * Use the interrupt based MsTimer2 library as
+ * a source for a 1mS event for the burn function.
+ *
  */
+ 
 #include <EventFuse.h>
+#include <MsTimer2.h>
 
 int ledPin = 13;       // LED output pin
 boolean output = LOW;  // Output state
 
-void FuseEvent(FuseID fuse, int userData){
+void ToggleOutput(FuseID fuse, int& userData){
   output = !output;
   digitalWrite( ledPin, output );
 }
 
 void setup() {
   pinMode(ledPin, OUTPUT);
+  EventFuse::newFuse( 20, INF_REPEAT, ToggleOutput );
+  EventFuse::newFuse( 21, INF_REPEAT, ToggleOutput );
   
-  // Set up the two fade fuses
-  eventFuse.newFuse( 150, INF_REPEAT, FuseEvent );
-  eventFuse.newFuse( 152, INF_REPEAT, FuseEvent );
+  MsTimer2::set( 1, EventFuse::burn );
+  MsTimer2::start();
 }
 
 void loop(){
-  delayMicroseconds(100);
-  eventFuse.burn(1);
 }

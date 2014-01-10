@@ -13,8 +13,6 @@
 #include <MsTimer2.h>
 
 #define OutputCount 4
-// These would be better handled as enums, 
-// but that requires a seperate .h file.
 #define OffTime 0
 #define OnTime 1
 #define OutputPin 2
@@ -29,7 +27,7 @@ byte outputs[OutputCount][3] ={{  5,  10,  13},   // Output A
                                {  2,  12,  11},   // Output C
                                { 10,   2,  10},}; // Output D
                     
-void OutputHandler(FuseID fuseID, int outputID){
+void OutputHandler(FuseID fuseID, int& outputID){
   // look up the pin associated with this output
   byte pin = outputs[outputID][OutputPin];
 
@@ -40,11 +38,7 @@ void OutputHandler(FuseID fuseID, int outputID){
   
   // Reset the fuse length with a new interval. The current state
   // of the pin is used to determine which interval should be used.
-  eventFuse[fuseID].fuseLen = outputs[outputID][state];
-}
-
-void timerTick(){
-  eventFuse.burn(1);
+  EventFuse::fuses[fuseID].fuseLen = outputs[outputID][state];
 }
 
 void setup() {
@@ -54,11 +48,11 @@ void setup() {
     digitalWrite( outputs[i][OutputPin], LOW );
 
     // Set up an event fuse for this output.
-    eventFuse.newFuse( i, outputs[i][OffTime], INF_REPEAT, OutputHandler );
+    EventFuse::newFuse( i, outputs[i][OffTime], INF_REPEAT, OutputHandler );
   }
   
   // Set MsTimer2 for one second per tick.
-  MsTimer2::set(1000, timerTick );
+  MsTimer2::set(1000, EventFuse::burn );
   MsTimer2::start();
 }
 
