@@ -42,11 +42,8 @@ void OutputHandler(FuseID fuseID, int& outputID){
 }
 
 void setup() {
-  Serial.begin(115200);
-  
   // Set up and init all outputs to off
   for(byte i = 0; i<OUTPUT_COUNT; i++){
-    Serial.println(i);
     pinMode( outputs[i][OUTPUT_PIN], OUTPUT);
     digitalWrite( outputs[i][OUTPUT_PIN], LOW );
 
@@ -55,7 +52,7 @@ void setup() {
   }
   
   // Set MsTimer2 for one second per tick.
-  MsTimer2::set(100, EventFuse::burn );
+  MsTimer2::set(1000, EventFuse::burn );
   MsTimer2::start();
 }
 
