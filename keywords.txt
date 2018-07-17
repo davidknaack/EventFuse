@@ -7,10 +7,10 @@
 #######################################
 
 EventFuse	KEYWORD1
-FuseID  KEYWORD1
-eventFuseCallback_t KEYWORD1
-FuseState KEYWORD1
-eventFuse_t KEYWORD1
+FuseID	KEYWORD1
+eventFuseCallback_t	KEYWORD1
+FuseState	KEYWORD1
+eventFuse_t	KEYWORD1
 
 
 #######################################
